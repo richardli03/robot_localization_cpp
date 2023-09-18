@@ -62,7 +62,7 @@ std::vector<unsigned int> draw_random_sample(std::vector<unsigned int> choices,
   return samples;
 }
 
-TFHelper::TFHelper(rclcpp::Node *node) {
+TFHelper::TFHelper(std::shared_ptr<rclcpp::Node> node) {
   // logger = node->get_logger();
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(node->get_clock());
   auto tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);

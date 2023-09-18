@@ -14,22 +14,26 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(nav_msgs REQUIRED)
+find_package(nav2_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-add_executable(test_node src/pf.cpp src/helper_functions.cpp src/occupancy_field.cpp src/angle_helpers.cpp)
-ament_target_dependencies(test_node rclcpp)
-ament_target_dependencies(test_node geometry_msgs)
-ament_target_dependencies(test_node sensor_msgs)
-ament_target_dependencies(test_node nav_msgs)
-ament_target_dependencies(test_node tf2_ros)
-ament_target_dependencies(test_node tf2)
+add_executable(pf src/pf.cpp src/helper_functions.cpp src/occupancy_field.cpp src/angle_helpers.cpp)
+ament_target_dependencies(pf rclcpp)
+ament_target_dependencies(pf geometry_msgs)
+ament_target_dependencies(pf sensor_msgs)
+ament_target_dependencies(pf nav2_msgs)
+ament_target_dependencies(pf tf2_ros)
+ament_target_dependencies(pf tf2)
 
 install(TARGETS
-  test_node
+  pf
   DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}/
 )
 
 if(BUILD_TESTING)

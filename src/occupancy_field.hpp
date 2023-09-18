@@ -1,4 +1,6 @@
-#pragma once
+#ifndef OCCUPANCYFIELD_HPP
+#define OCCUPANCYFIELD_HPP
+
 #include <nav_msgs/msg/occupancy_grid.hpp>
 
 #include "knncpp.h"
@@ -20,7 +22,7 @@ public:
   Matrix closest_occ;
   Matrix occupied_coordinates;
 
-  OccupancyField(rclcpp::Node *node);
+  OccupancyField(std::shared_ptr<rclcpp::Node> node);
 
   /**
    * Returns: the upper and lower bounds of x and y such that the resultant
@@ -36,3 +38,4 @@ public:
    */
   float get_closest_obstacle_distance(float x, float y);
 };
+#endif

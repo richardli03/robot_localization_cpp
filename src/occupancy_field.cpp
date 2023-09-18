@@ -7,7 +7,7 @@
 
 typedef knncpp::Matrixi Matrixi;
 
-OccupancyField::OccupancyField(rclcpp::Node *node) {
+OccupancyField::OccupancyField(std::shared_ptr<rclcpp::Node> node) {
   // grab the map from the map server
   rclcpp::Client<nav_msgs::srv::GetMap>::SharedPtr map_client_service =
       node->create_client<nav_msgs::srv::GetMap>("map_server/map");
@@ -18,14 +18,11 @@ OccupancyField::OccupancyField(rclcpp::Node *node) {
   }
   auto future = map_client_service->async_send_request(
       std::make_shared<nav_msgs::srv::GetMap::Request>());
-  // TODO: fix
-  // rclcpp::spin_until_future_complete(*node, future);
+  rclcpp::spin_until_future_complete(node, future);
   auto map = future.get()->map;
-  std::printf("map received width: %i height %i", map.info.width,
-              map.info.height);
 
   // The coordinates of each grid cell in the map
-  Matrix x(map.info.width * map.info.height, 2);
+  Matrix x(2, map.info.width * map.info.height);
 
   // while we're at it let's count the number of occupied cells
   unsigned int total_occupied = 0;
@@ -39,8 +36,8 @@ OccupancyField::OccupancyField(rclcpp::Node *node) {
       if (map.data[ind] > 0) {
         total_occupied++;
       }
-      x(curr, 0) = (float)i;
-      x(curr, 1) = (float)j;
+      x(0, curr) = (float)i;
+      x(1, curr) = (float)j;
       curr++;
     }
   }
@@ -59,7 +56,7 @@ OccupancyField::OccupancyField(rclcpp::Node *node) {
       }
     }
   }
-
+  std::cout << "created indices " << total_occupied << std::endl;
   RCLCPP_DEBUG_STREAM(node->get_logger(), "building kd tree");
   knncpp::KDTreeMinkowskiX<double, knncpp::EuclideanDistance<double>> kdtree(
       occupied_coordinates);
@@ -69,7 +66,7 @@ OccupancyField::OccupancyField(rclcpp::Node *node) {
   Matrixi indices;
   Matrix distances;
   kdtree.query(x, 1, indices, distances);
-
+  std::cout << "query done" << std::endl;
   // find neighrbors
   RCLCPP_DEBUG_STREAM(node->get_logger(), "populating occupancy field");
   Matrix closest_occ(map.info.width, map.info.height);

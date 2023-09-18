@@ -1,3 +1,6 @@
+#ifndef ANGLE_HELPERS_HPP
+#define ANGLE_HELPERS_HPP
+
 #include "geometry_msgs/msg/quaternion.hpp"
 
 /**
@@ -12,3 +15,5 @@ geometry_msgs::msg::Quaternion quaternion_from_euler(float roll, float pitch,
  * z, w]
  */
 std::array<float, 3> euler_from_quaternion(geometry_msgs::msg::Quaternion quat);
+
+#endif

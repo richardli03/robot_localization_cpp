@@ -35,8 +35,8 @@ def generate_launch_description():
             parameters=[{"yaml_filename": LaunchConfiguration('map_yaml')}],
             output='screen'
         ),
-        Node(package='robot_localization',
-             executable='pf.py',
+        Node(package='robot_localization_cpp',
+             executable='pf',
              name='my_pf',
              parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}],
              emulate_tty=True,  # https://github.com/ros2/launch/issues/188

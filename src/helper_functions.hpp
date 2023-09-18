@@ -1,3 +1,6 @@
+#ifndef HELPER_FUNCTIONS_HPP
+#define HELPER_FUNCTIONS_HPP
+
 // #include <buffer.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -33,7 +36,7 @@ public:
   std::optional<geometry_msgs::msg::Point> translation;
   std::optional<geometry_msgs::msg::Quaternion> rotation;
 
-  TFHelper(rclcpp::Node *node);
+  TFHelper(std::shared_ptr<rclcpp::Node> node);
 
   /**
    * Convert from representation of a pose as translation and rotation
@@ -108,3 +111,5 @@ private:
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
 };
+
+#endif
