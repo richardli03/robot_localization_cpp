@@ -42,7 +42,6 @@ geometry_msgs::msg::Pose Particle::as_pose()
 
 ParticleFilter::ParticleFilter() : Node("pf")
 {
-  std::cout << "CONSTRUCTING NODE" << std::endl;
   base_frame = "base_footprint"; // the frame of the robot base
   map_frame = "map";             // the name of the map coordinate frame
   odom_frame = "odom";           // the name of the odometry coordinate frame
@@ -60,7 +59,7 @@ ParticleFilter::ParticleFilter() : Node("pf")
   // location (for instance using rviz)
   auto sub1_opt = rclcpp::SubscriptionOptions();
   sub1_opt.callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+  initial_pose_subscriber = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "initialpose", 10,
       std::bind(&ParticleFilter::update_initial_pose, this, _1),
       sub1_opt);
@@ -73,7 +72,7 @@ ParticleFilter::ParticleFilter() : Node("pf")
   auto sub2_opt = rclcpp::SubscriptionOptions();
   sub2_opt.callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   // laser_subscriber listens for data from the lidar
-  this->create_subscription<sensor_msgs::msg::LaserScan>(
+  laserscan_subscriber = this->create_subscription<sensor_msgs::msg::LaserScan>(
       scan_topic,
       10,
       std::bind(&ParticleFilter::scan_received, this, _1),
@@ -86,17 +85,9 @@ ParticleFilter::ParticleFilter() : Node("pf")
   // this is the current scan that our run_loop should process
   scan_to_process.reset();
 
-  // your particle cloud will go here
-  std::cout << "generating occupancy field" << std::endl;
-  std::cout << "done generating tf helper" << std::endl;
-  this->create_wall_timer(
+  timer = this->create_wall_timer(
       std::chrono::milliseconds(50),
       std::bind(&ParticleFilter::pub_latest_transform, this));
-}
-
-ParticleFilter::~ParticleFilter()
-{
-  std::cout << "in destructor" << std::endl;
 }
 
 void ParticleFilter::pub_latest_transform()
@@ -118,7 +109,6 @@ void ParticleFilter::run_loop()
     return;
   }
   auto msg = scan_to_process.value();
-
   std::tuple<std::optional<geometry_msgs::msg::Pose>,
              std::optional<std::chrono::nanoseconds>>
       matching_odom_pose = transform_helper_->get_matching_odom_pose(
@@ -137,20 +127,15 @@ void ParticleFilter::run_loop()
     }
     return;
   }
-
   auto polar_coord = transform_helper_->convert_scan_to_polar_in_robot_frame(
       msg, base_frame);
   auto r = std::get<0>(polar_coord);
   auto theta = std::get<1>(polar_coord);
-  // std::cout << std::format("r[0]={}, theta[0]={}",
-  // std::get<0>(polar_coord)[0], std::get<1>(polar_coord)[0]);
   // clear the current scan so that we can process the next one
   scan_to_process.reset();
-
   odom_pose = new_pose;
   auto new_odom_xy_theta =
       transform_helper_->convert_pose_to_xy_theta(odom_pose.value());
-
   if (current_odom_xy_theta.size() == 0)
   {
     current_odom_xy_theta = new_odom_xy_theta;
@@ -276,6 +261,7 @@ void ParticleFilter::publish_particles(rclcpp::Time timestamp)
     nav2_msgs::msg::Particle converted;
     converted.weight = particle_cloud[i].w;
     converted.pose = particle_cloud[i].as_pose();
+    msg.particles.push_back(converted);
   }
 
   // actually send the message so that we can view it in rviz
@@ -284,7 +270,6 @@ void ParticleFilter::publish_particles(rclcpp::Time timestamp)
 
 void ParticleFilter::scan_received(sensor_msgs::msg::LaserScan msg)
 {
-  std::cout << "GOt a scan" << std::endl;
   last_scan_timestamp = msg.header.stamp;
   /**
    * we throw away scans until we are done processing the previous scan
@@ -303,6 +288,7 @@ void ParticleFilter::setup_helpers(std::shared_ptr<ParticleFilter> nodePtr)
   occupancy_field = std::make_shared<OccupancyField>(OccupancyField(nodePtr));
   std::cout << "done generating occupancy field" << std::endl;
   transform_helper_ = std::make_shared<TFHelper>(TFHelper(nodePtr));
+  std::cout << "done generating TFHelper" << std::endl;
 }
 
 int main(int argc, char **argv)

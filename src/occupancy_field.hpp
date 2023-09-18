@@ -36,6 +36,6 @@ public:
    * the map.  If the (x,y) coordinate is out of the map boundaries, nan
    * will be returned.
    */
-  float get_closest_obstacle_distance(float x, float y);
+  double get_closest_obstacle_distance(float x, float y);
 };
 #endif

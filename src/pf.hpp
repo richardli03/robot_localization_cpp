@@ -85,22 +85,7 @@ public:
 */
 class ParticleFilter : public rclcpp::Node {
 public:
-  std::string base_frame;
-  std::string map_frame;
-  std::string odom_frame;
-  std::string scan_topic;
-  int n_particles;
-  float d_thresh;
-  float a_thresh;
-  rclcpp::Publisher<nav2_msgs::msg::ParticleCloud>::SharedPtr particle_pub;
-  std::optional<builtin_interfaces::msg::Time> last_scan_timestamp;
-  std::optional<sensor_msgs::msg::LaserScan> scan_to_process;
-  std::vector<float> current_odom_xy_theta;
-  std::vector<Particle> particle_cloud;
-  std::optional<geometry_msgs::msg::Pose> odom_pose;
-
   ParticleFilter();
-  virtual ~ParticleFilter();
 
   void setup_helpers(std::shared_ptr<ParticleFilter> nodePtr);
 
@@ -179,6 +164,22 @@ private:
   void scan_received(sensor_msgs::msg::LaserScan msg);
 
 private:
+  std::string base_frame;
+  std::string map_frame;
+  std::string odom_frame;
+  std::string scan_topic;
+  int n_particles;
+  float d_thresh;
+  float a_thresh;
+  rclcpp::Publisher<nav2_msgs::msg::ParticleCloud>::SharedPtr particle_pub;
+  std::optional<builtin_interfaces::msg::Time> last_scan_timestamp;
+  std::optional<sensor_msgs::msg::LaserScan> scan_to_process;
+  std::vector<float> current_odom_xy_theta;
+  std::vector<Particle> particle_cloud;
+  std::optional<geometry_msgs::msg::Pose> odom_pose;
+  rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserscan_subscriber;
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_subscriber;
+  rclcpp::TimerBase::SharedPtr timer;
   std::shared_ptr<OccupancyField> occupancy_field;
   std::shared_ptr<TFHelper> transform_helper_;
 };
