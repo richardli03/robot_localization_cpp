@@ -291,6 +291,27 @@ void ParticleFilter::setup_helpers(std::shared_ptr<ParticleFilter> nodePtr)
   std::cout << "done generating TFHelper" << std::endl;
 }
 
+int ParticleFilter::find_scan_closeness(std::vector<std::vector<float> > points)
+{
+  std::vector<int> current_point;
+  int sum = 0;
+
+  double thresh = .4;
+  double intermediate;
+  for (int i = 0; i < 360;i++){
+    current_point = points[i];
+    //x,y both floats
+    intermediate = get_closest_obstacle_distance(current_point[0], current_point[1]);
+
+    if (intermediate < thresh){
+      sum++;
+    }
+
+  }
+  return sum;
+
+}
+
 int main(int argc, char **argv)
 {
   // this is useful to give time for the map server to get ready...
@@ -305,3 +326,5 @@ int main(int argc, char **argv)
   rclcpp::shutdown();
   return 0;
 }
+
+
