@@ -162,6 +162,8 @@ private:
   void publish_particles(rclcpp::Time timestamp);
 
   void scan_received(sensor_msgs::msg::LaserScan msg);
+  int find_scan_closeness(std::vector<std::vector<float> > points);
+  std::vector<std::vector<float>> transform_particle_lidar_scans(std::vector<Particle> particles, Particle initParticle);
 
 private:
   std::string base_frame;

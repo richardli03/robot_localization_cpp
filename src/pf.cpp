@@ -283,6 +283,14 @@ void ParticleFilter::scan_received(sensor_msgs::msg::LaserScan msg)
   run_loop();
 }
 
+std::vector<std::vector<float>> ParticleFilter::transform_particle_lidar_scans(std::vector<Particle> particles, Particle initParticle) {
+  geometry_msgs::msg::Pose initPose = initParticle.as_pose();
+  for (auto& particle : particles) {
+    // Get Particle pose
+    geometry_msgs::msg::Pose pose = particle.as_pose();
+  }
+}
+
 void ParticleFilter::setup_helpers(std::shared_ptr<ParticleFilter> nodePtr)
 {
   occupancy_field = std::make_shared<OccupancyField>(OccupancyField(nodePtr));
@@ -293,7 +301,7 @@ void ParticleFilter::setup_helpers(std::shared_ptr<ParticleFilter> nodePtr)
 
 int ParticleFilter::find_scan_closeness(std::vector<std::vector<float> > points)
 {
-  std::vector<int> current_point;
+  std::vector<float> current_point;
   int sum = 0;
 
   double thresh = .4;
@@ -301,7 +309,7 @@ int ParticleFilter::find_scan_closeness(std::vector<std::vector<float> > points)
   for (int i = 0; i < 360;i++){
     current_point = points[i];
     //x,y both floats
-    intermediate = get_closest_obstacle_distance(current_point[0], current_point[1]);
+    intermediate = occupancy_field->get_closest_obstacle_distance(current_point[0], current_point[1]);
 
     if (intermediate < thresh){
       sum++;
