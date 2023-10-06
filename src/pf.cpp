@@ -17,6 +17,7 @@
 #include "pf.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
+#include <random>
 using std::placeholders::_1;
 
 Particle::Particle(float w, float theta, float x, float y)
@@ -239,7 +240,28 @@ void ParticleFilter::initialize_particle_cloud(
   {
     xy_theta = transform_helper_->convert_pose_to_xy_theta(odom_pose.value());
   }
+  
+  
+  double mean = 0;
+  double std = 0.1;
+
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::normal_distribution<double> x_distribution(mean, std);
+  std::normal_distribution<double> y_distribution(mean, std);
+  std::normal_distribution<double> theta_distribution(mean, 2*M_PI); 
+
+  
   // TODO: create particles
+  for (unsigned int i = 0; i < n_particles; i++){
+    Particle gen_particle;
+    gen_particle.x = x_distribution(gen);
+    gen_particle.y = y_distribution(gen);
+    gen_particle.theta = theta_distribution(gen);
+    gen_particle.w = 1; // so we can see that thing
+    particle_cloud.push_back(gen_particle); 
+  }
+  
 
   normalize_particles();
   update_robot_pose();
