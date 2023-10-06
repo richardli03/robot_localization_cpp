@@ -247,9 +247,9 @@ void ParticleFilter::initialize_particle_cloud(
 
   std::random_device rd;
   std::mt19937 gen(rd());
-  std::normal_distribution<double> x_distribution(mean, std);
-  std::normal_distribution<double> y_distribution(mean, std);
-  std::normal_distribution<double> theta_distribution(mean, 2*M_PI); 
+  std::normal_distribution<double> x_distribution(xy_theta.value()[0], std);
+  std::normal_distribution<double> y_distribution(xy_theta.value()[0], std);
+  std::normal_distribution<double> theta_distribution(xy_theta.value()[0], 2*M_PI); 
 
   
   // TODO: create particles
