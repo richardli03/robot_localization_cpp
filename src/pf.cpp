@@ -202,20 +202,26 @@ void ParticleFilter::update_particles_with_odom()
     auto delta_x = new_odom_xy_theta[0] - current_odom_xy_theta[0];
     auto delta_y = new_odom_xy_theta[1] - current_odom_xy_theta[1];
     auto delta_theta = new_odom_xy_theta[2] - current_odom_xy_theta[2];
+    // RICHARD: MODIFIED PARTICLES WITH DELTA
+    for (auto& particle : particle_cloud) {
+      particle.x = particle.x + delta_x;
+      particle.y = particle.y + delta_y;
+      particle.theta = particle.theta + delta_theta;
+    }
   }
   else
   {
     current_odom_xy_theta = new_odom_xy_theta;
     return;
   }
-
-  // TODO: modify particles using delta
 }
 
 void ParticleFilter::resample_particles()
 {
   // make sure the distribution is normalized
   normalize_particles();
+
+
   // TODO: fill out the rest of the implementation
 }
 
