@@ -56,6 +56,15 @@ public:
   float angle_normalize(float z);
 
   /**
+   * Create a transformation matrix from x, y, and theta
+   * @param x: the x-coordinate of the transformation
+   * @param y: the y-coordinate of the transformation
+   * @param theta: the yaw of the transformation
+   * @return: a 3x3 transformation matrix
+   */
+  Eigen::Matrix3d createTransformationMatrix(double x, double y, double theta);
+
+  /**
    * Calculates the difference between angle a and angle b (both should
    * be in radians) the difference is always based on the closest
    * rotation from angle a to angle b.

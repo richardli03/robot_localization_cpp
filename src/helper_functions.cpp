@@ -9,6 +9,7 @@
 #include <random>
 #include <tuple>
 #include <vector>
+#include <eigen3/Eigen/Dense>
 
 #include "angle_helpers.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -202,6 +203,14 @@ TFHelper::get_matching_odom_pose(std::string odom_frame, std::string base_frame,
   } else {
     return std::make_tuple(std::nullopt, std::nullopt);
   }
+}
+
+Eigen::Matrix3d TFHelper::createTransformationMatrix(double x, double y, double theta) {
+    Eigen::Matrix3d T;
+    T << cos(theta), -sin(theta), x,
+         sin(theta), cos(theta),  y,
+         0,           0,          1;
+    return T;
 }
 
 std::tuple<std::vector<float>, std::vector<float>>

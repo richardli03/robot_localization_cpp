@@ -5,6 +5,7 @@
 #include <rclcpp/time.hpp>
 #include <string>
 #include <tuple>
+#include <eigen3/Eigen/Dense>
 
 #include "angle_helpers.hpp"
 #include "builtin_interfaces/msg/time.hpp"
@@ -192,24 +193,25 @@ void ParticleFilter::update_robot_pose()
 
 void ParticleFilter::update_particles_with_odom()
 {
-  auto new_odom_xy_theta =
-      transform_helper_->convert_pose_to_xy_theta(odom_pose.value());
+  auto new_odom_xy_theta = transform_helper_->convert_pose_to_xy_theta(odom_pose.value());
 
-  // compute the change in x,y,theta since our last update
-  if (current_odom_xy_theta.size() >= 3)
-  {
-    auto old_odom_xy_theta = current_odom_xy_theta;
-    auto delta_x = new_odom_xy_theta[0] - current_odom_xy_theta[0];
-    auto delta_y = new_odom_xy_theta[1] - current_odom_xy_theta[1];
-    auto delta_theta = new_odom_xy_theta[2] - current_odom_xy_theta[2];
-  }
-  else
-  {
-    current_odom_xy_theta = new_odom_xy_theta;
-    return;
-  }
+  Eigen::Matrix3d Ti = transform_helper_->createTransformationMatrix(current_odom_xy_theta[0], current_odom_xy_theta[1], current_odom_xy_theta[2]);
+  // Get Particle pose
+  Eigen::Matrix3d T = transform_helper_->createTransformationMatrix(new_odom_xy_theta[0], new_odom_xy_theta[1], new_odom_xy_theta[2]);
+  // Get the pose of the particle relative to the initial particle
+  Eigen::Matrix3d poseDiff = T * Ti.inverse();
+    
 
-  // TODO: modify particles using delta
+  // TODO: modify particles using poseDiff
+  for (auto& particle: particle_cloud) {
+    auto particlePose = transform_helper_->createTransformationMatrix(particle.x, particle.y, particle.theta);
+    // apply poseDiff on the particlePose
+    auto newparticlePose = poseDiff * particlePose;
+    // update the particle
+    particle.x = newparticlePose(0,2);
+    particle.y = newparticlePose(1,2);
+    particle.theta = atan2(newparticlePose(1,0), newparticlePose(0,0));
+  }
 }
 
 void ParticleFilter::resample_particles()
@@ -303,14 +305,6 @@ void ParticleFilter::scan_received(sensor_msgs::msg::LaserScan msg)
   }
   // call run_loop to see if we need to update our filter, this will prevent more scans from coming in
   run_loop();
-}
-
-std::vector<std::vector<float>> ParticleFilter::transform_particle_lidar_scans(std::vector<Particle> particles, Particle initParticle) {
-  geometry_msgs::msg::Pose initPose = initParticle.as_pose();
-  for (auto& particle : particles) {
-    // Get Particle pose
-    geometry_msgs::msg::Pose pose = particle.as_pose();
-  }
 }
 
 void ParticleFilter::setup_helpers(std::shared_ptr<ParticleFilter> nodePtr)
