@@ -9,7 +9,6 @@
 #include <random>
 #include <tuple>
 #include <vector>
-#include <eigen3/Eigen/Dense>
 
 #include "angle_helpers.hpp"
 #include "rclcpp/rclcpp.hpp"
