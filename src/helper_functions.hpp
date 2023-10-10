@@ -12,6 +12,7 @@
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <tuple>
+#include <eigen3/Eigen/Dense>
 
 #include "rclcpp/rclcpp.hpp"
 
