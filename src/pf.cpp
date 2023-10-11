@@ -49,7 +49,7 @@ ParticleFilter::ParticleFilter() : Node("pf")
   odom_frame = "odom";           // the name of the odometry coordinate frame
   scan_topic = "scan";           // the topic where we will get laser scans from
 
-  n_particles = 300; // the number of particles to use
+  n_particles = 20; // the number of particles to use
 
   d_thresh = 0.2; // the amount of linear movement before performing an update
   a_thresh =
@@ -199,18 +199,26 @@ void ParticleFilter::update_particles_with_odom()
   // Get Particle pose
   Eigen::Matrix3d T = transform_helper_->createTransformationMatrix(new_odom_xy_theta[0], new_odom_xy_theta[1], new_odom_xy_theta[2]);
   // Get the pose of the particle relative to the initial particle
-  Eigen::Matrix3d poseDiff = T * Ti.inverse();
+  Eigen::Matrix3d poseDiff = Ti.inverse() * T;
     
 
+  // print particle_cloud to see what it looks like
+  for (const auto& particle : particle_cloud) {
+    std::cout << "before: x=" << particle.x << ", y=" << particle.y << ", theta=" << particle.theta << std::endl;
+  }
   // TODO: modify particles using poseDiff
   for (auto& particle: particle_cloud) {
     auto particlePose = transform_helper_->createTransformationMatrix(particle.x, particle.y, particle.theta);
     // apply poseDiff on the particlePose
-    auto newparticlePose = poseDiff * particlePose;
+    auto newparticlePose = particlePose * poseDiff;
     // update the particle
     particle.x = newparticlePose(0,2);
     particle.y = newparticlePose(1,2);
-    particle.theta = atan2(newparticlePose(1,0), newparticlePose(0,0));
+    // particle.theta += atan2(newparticlePose(1,0), newparticlePose(0,0));
+    particle.theta += new_odom_xy_theta[2] - current_odom_xy_theta[2];
+  }
+  for (const auto& particle : particle_cloud) {
+    std::cout << "after: x=" << particle.x << ", y=" << particle.y << ", theta=" << particle.theta << std::endl;
   }
 }
 
