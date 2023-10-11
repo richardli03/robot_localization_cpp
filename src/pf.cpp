@@ -226,9 +226,23 @@ void ParticleFilter::resample_particles()
 {
   // make sure the distribution is normalized
   normalize_particles();
+  std::vector<float> probabilities;
+  std::vector<unsigned int> choices;
 
 
+  for (unsigned int i = 0; i < particle_cloud.size(); i++) {
+    probabilities.push_back(particle_cloud[i].w);  
+    choices.push_back(i);
+  }
   // TODO: fill out the rest of the implementation
+  auto results = draw_random_sample(choices, probabilities, n_particles);
+  
+  std::vector<Particle> new_particles = particle_cloud;
+  particle_cloud.clear();
+  
+  for (unsigned int i = 0; i < choices.size(); i++) {
+    particle_cloud.push_back(new_particles[choices[i]]);
+  }
 }
 
 void ParticleFilter::update_particles_with_laser(std::vector<float> r,
@@ -281,7 +295,15 @@ void ParticleFilter::initialize_particle_cloud(
 
 void ParticleFilter::normalize_particles()
 {
-  // TODO: implement this
+  // RICHARD: this should modify particles in place (i'm really not sure how c++ does it)
+  float sum_of_weights = 0.0;
+  for (auto& particle: particle_cloud){
+    sum_of_weights += particle.w;
+  }
+
+  for (auto& particle: particle_cloud){
+    particle.w = particle.w / sum_of_weights;
+  }
 }
 
 void ParticleFilter::publish_particles(rclcpp::Time timestamp)
