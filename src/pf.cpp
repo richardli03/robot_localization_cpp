@@ -218,13 +218,22 @@ void ParticleFilter::resample_particles()
   // make sure the distribution is normalized
   normalize_particles();
   std::vector<float> probabilities;
+  std::vector<unsigned int> choices;
 
 
-  for (auto& particle: particle_cloud) {
-    probabilities.push_back(particle.w);
+  for (unsigned int i = 0; i < particle_cloud.size(); i++) {
+    probabilities.push_back(particle_cloud[i].w);  
+    choices.push_back(i);
   }
   // TODO: fill out the rest of the implementation
-  draw_random_sample(particle_cloud, probabilities, n_particles);
+  auto results = draw_random_sample(choices, probabilities, n_particles);
+  
+  std::vector<Particle> new_particles = particle_cloud;
+  particle_cloud.clear();
+  
+  for (unsigned int i = 0; i < choices.size(); i++) {
+    particle_cloud.push_back(new_particles[choices[i]]);
+  }
 }
 
 void ParticleFilter::update_particles_with_laser(std::vector<float> r,
