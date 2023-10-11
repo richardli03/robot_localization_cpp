@@ -24,7 +24,7 @@
  * represented as a list
  * @param n: the number of samples
  */
-std::vector<unsigned int> draw_random_sample(std::vector<unsigned int> choices,
+std::vector<unsigned int> draw_random_sample(std::vector<Particle> choices,
                                              std::vector<float> probabilities,
                                              unsigned int n);
 

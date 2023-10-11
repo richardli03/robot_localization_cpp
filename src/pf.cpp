@@ -49,8 +49,7 @@ ParticleFilter::ParticleFilter() : Node("pf")
   odom_frame = "odom";           // the name of the odometry coordinate frame
   scan_topic = "scan";           // the topic where we will get laser scans from
 
-  n_particles = 300; // the number of particles to use
-
+  n_particles = 1; // the number of particles to use
   d_thresh = 0.2; // the amount of linear movement before performing an update
   a_thresh =
       M_PI / 6; // the amount of angular movement before performing an update
@@ -218,9 +217,14 @@ void ParticleFilter::resample_particles()
 {
   // make sure the distribution is normalized
   normalize_particles();
+  std::vector<float> probabilities;
 
 
+  for (auto& particle: particle_cloud) {
+    probabilities.push_back(particle.w);
+  }
   // TODO: fill out the rest of the implementation
+  draw_random_sample(particle_cloud, probabilities, n_particles);
 }
 
 void ParticleFilter::update_particles_with_laser(std::vector<float> r,
@@ -273,7 +277,15 @@ void ParticleFilter::initialize_particle_cloud(
 
 void ParticleFilter::normalize_particles()
 {
-  // TODO: implement this
+  // RICHARD: this should modify particles in place (i'm really not sure how c++ does it)
+  float sum_of_weights = 0.0;
+  for (auto& particle: particle_cloud){
+    sum_of_weights += particle.w;
+  }
+
+  for (auto& particle: particle_cloud){
+    particle.w = particle.w / sum_of_weights;
+  }
 }
 
 void ParticleFilter::publish_particles(rclcpp::Time timestamp)
