@@ -233,7 +233,7 @@ void ParticleFilter::resample_particles()
   particle_cloud.clear();
   
   for (unsigned int i = 0; i < choices.size(); i++) {
-    particle_cloud.push_back(new_particles[choices[i]]);
+    particle_cloud.push_back(new_particles[results[i]]);
   }
 }
 
