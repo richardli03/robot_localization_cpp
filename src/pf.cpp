@@ -201,11 +201,6 @@ void ParticleFilter::update_particles_with_odom()
   // Get the pose of the particle relative to the initial particle
   Eigen::Matrix3d poseDiff = Ti.inverse() * T;
     
-
-  // print particle_cloud to see what it looks like
-  for (const auto& particle : particle_cloud) {
-    std::cout << "before: x=" << particle.x << ", y=" << particle.y << ", theta=" << particle.theta << std::endl;
-  }
   // TODO: modify particles using poseDiff
   for (auto& particle: particle_cloud) {
     auto particlePose = transform_helper_->createTransformationMatrix(particle.x, particle.y, particle.theta);
@@ -216,9 +211,6 @@ void ParticleFilter::update_particles_with_odom()
     particle.y = newparticlePose(1,2);
     // particle.theta += atan2(newparticlePose(1,0), newparticlePose(0,0));
     particle.theta += new_odom_xy_theta[2] - current_odom_xy_theta[2];
-  }
-  for (const auto& particle : particle_cloud) {
-    std::cout << "after: x=" << particle.x << ", y=" << particle.y << ", theta=" << particle.theta << std::endl;
   }
 }
 
@@ -248,9 +240,24 @@ void ParticleFilter::resample_particles()
 void ParticleFilter::update_particles_with_laser(std::vector<float> r,
                                                  std::vector<float> theta)
 {
-  // TODO: implement this
-  (void)r;
-  (void)theta;
+  for (unsigned int j = 0; j < particle_cloud.size(); j++) {
+    int sum = 0;
+    double thresh = .4;
+    double intermediate;
+    auto laser_scan_map_frame = particle_cloud[j].transform_scan_to_map(r, theta);
+
+
+    std::cout << "before" << particle_cloud[j].w << std::endl;
+    for (unsigned int i = 0; i < r.size(); i++) {
+      intermediate = occupancy_field->get_closest_obstacle_distance(
+                      laser_scan_map_frame(0, i), laser_scan_map_frame(1, i)), r.size();
+      if (intermediate < thresh) {
+        sum ++;
+      }
+    }
+    particle_cloud[j].w = sum;
+    std::cout << "after" << particle_cloud[j].w << std::endl;
+  }
 }
 
 void ParticleFilter::update_initial_pose(geometry_msgs::msg::PoseWithCovarianceStamped msg)
@@ -347,25 +354,25 @@ void ParticleFilter::setup_helpers(std::shared_ptr<ParticleFilter> nodePtr)
   std::cout << "done generating TFHelper" << std::endl;
 }
 
-int ParticleFilter::find_scan_closeness(std::vector<std::vector<float> > points)
+Eigen::Matrix3d Particle::xy_theta_to_pose() {
+  Eigen::Matrix3d pose{{cos(this->theta), -sin(this->theta), this->x},
+                       {sin(this->theta), cos(this->theta), this->y},
+                       {0, 0, 1}};
+  return pose;
+}
+
+Eigen::Matrix3Xd Particle::transform_scan_to_map(std::vector<float> r,
+                                                   std::vector<float> theta)
 {
-  std::vector<float> current_point;
-  int sum = 0;
+  Eigen::Matrix3Xd lidar_scan(3, r.size());
 
-  double thresh = .4;
-  double intermediate;
-  for (int i = 0; i < 360;i++){
-    current_point = points[i];
-    //x,y both floats
-    intermediate = occupancy_field->get_closest_obstacle_distance(current_point[0], current_point[1]);
-
-    if (intermediate < thresh){
-      sum++;
-    }
-
+  for (unsigned int i = 0; i < r.size(); i++) {
+    lidar_scan(0, i) = r[i] * cos(theta[i]);
+    lidar_scan(1, i) = r[i] * sin(theta[i]);
+    lidar_scan(2, i) = 1;
   }
-  return sum;
 
+  return this->xy_theta_to_pose() * lidar_scan;
 }
 
 int main(int argc, char **argv)

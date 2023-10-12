@@ -49,6 +49,15 @@ public:
    * A helper function to convert a particle to a geometry_msgs/Pose message
    */
   geometry_msgs::msg::Pose as_pose();
+
+  /**
+   * A helper function to convert a particle to a geometry_msgs/Pose message
+   * with a given orientation
+   */
+  Eigen::Matrix3Xd transform_scan_to_map(std::vector<float> r,
+                                                   std::vector<float> theta);
+
+  Eigen::Matrix3d xy_theta_to_pose();
 };
 
 /**
@@ -162,7 +171,6 @@ private:
   void publish_particles(rclcpp::Time timestamp);
 
   void scan_received(sensor_msgs::msg::LaserScan msg);
-  int find_scan_closeness(std::vector<std::vector<float> > points);
 
 private:
   std::string base_frame;
