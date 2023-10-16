@@ -72,7 +72,7 @@ TFHelper::TFHelper(std::shared_ptr<rclcpp::Node> node) {
 }
 
 geometry_msgs::msg::Pose
-convert_translation_rotation_to_pose(float translation[3], float rotation[4]) {
+TFHelper::convert_translation_rotation_to_pose(float translation[3], float rotation[4]) {
   geometry_msgs::msg::Pose pose;
 
   pose.position.x = translation[0];

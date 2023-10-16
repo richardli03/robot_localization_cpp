@@ -193,24 +193,39 @@ void ParticleFilter::update_robot_pose()
 
 void ParticleFilter::update_particles_with_odom()
 {
-  auto new_odom_xy_theta = transform_helper_->convert_pose_to_xy_theta(odom_pose.value());
+  auto new_odom_xy_theta =
+      transform_helper_->convert_pose_to_xy_theta(odom_pose.value());
 
-  Eigen::Matrix3d Ti = transform_helper_->createTransformationMatrix(current_odom_xy_theta[0], current_odom_xy_theta[1], current_odom_xy_theta[2]);
-  // Get Particle pose
-  Eigen::Matrix3d T = transform_helper_->createTransformationMatrix(new_odom_xy_theta[0], new_odom_xy_theta[1], new_odom_xy_theta[2]);
-  // Get the pose of the particle relative to the initial particle
-  Eigen::Matrix3d poseDiff = Ti.inverse() * T;
-    
-  // TODO: modify particles using poseDiff
+  // compute the change in x,y,theta since our last update
+  if (current_odom_xy_theta.size() >= 3)
+  {
+    auto old_odom_xy_theta = current_odom_xy_theta;
+    auto delta_x = new_odom_xy_theta[0] - current_odom_xy_theta[0];
+    auto delta_y = new_odom_xy_theta[1] - current_odom_xy_theta[1];
+    auto delta_theta = new_odom_xy_theta[2] - current_odom_xy_theta[2];
+  }
+  else
+  {
+    current_odom_xy_theta = new_odom_xy_theta;
+    return;
+  }
+  std::vector<float> poseDelta = {new_odom_xy_theta[0] - current_odom_xy_theta[0], new_odom_xy_theta[1] - current_odom_xy_theta[1], new_odom_xy_theta[2] - current_odom_xy_theta[2]};
+  std::cout << "\n";
+  std::cout << new_odom_xy_theta[0] << "," << new_odom_xy_theta[1] << "," << new_odom_xy_theta[2] << std::endl;
+  std::cout << current_odom_xy_theta[0] << "," << current_odom_xy_theta[1] << "," << current_odom_xy_theta[2] << std::endl;
+  std::cout << poseDelta[0] << "," << poseDelta[1] << "," << poseDelta[2] << std::endl;
   for (auto& particle: particle_cloud) {
-    auto particlePose = transform_helper_->createTransformationMatrix(particle.x, particle.y, particle.theta);
-    // apply poseDiff on the particlePose
-    auto newparticlePose = particlePose * poseDiff;
-    // update the particle
-    particle.x = newparticlePose(0,2);
-    particle.y = newparticlePose(1,2);
-    // particle.theta += atan2(newparticlePose(1,0), newparticlePose(0,0));
-    particle.theta += new_odom_xy_theta[2] - current_odom_xy_theta[2];
+    // auto particlePose = transform_helper_->createTransformationMatrix(particle.x, particle.y, particle.theta);
+    // // apply poseDiff on the particlePose
+    // auto newparticlePose = particlePose * poseDiff;
+    // // update the particle
+    // particle.x = newparticlePose(0,2);
+    // particle.y = newparticlePose(1,2);
+    // // particle.theta += atan2(newparticlePose(1,0), newparticlePose(0,0));
+    // particle.theta += new_odom_xy_theta[2] - current_odom_xy_theta[2];
+    particle.x += cos(particle.theta)*poseDelta[0];
+    particle.y += sin(particle.theta)*poseDelta[1];
+    particle.theta += poseDelta[2];
   }
 }
 
