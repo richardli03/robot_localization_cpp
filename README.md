@@ -32,8 +32,23 @@ But we'll go into more detail about each step.
 One key design decision we had to make was related to our implementation of resampling. There are a number of ways to create new points around the points that were the best from the previous sampling. 
 
 # Challenges
+1. We had an absurd amount of difficulty just reading C++. Perhaps it's because we are spoiled with Python's lack of typing, but trying to keep track of each datatype (especially what data type was within a list) was really challenging. 
+
+2. Because we had so much trouble learning C++, it was difficult for us to collaborate and evenly divvy up tasks. Our initial idea was to each implement a part of the particle filter, but that meant that large swaths of code were untested when integration began. 
+
+3. We thought that we understood the matrix math that had to be done in order to implement the particle filter, so we kept on debugging the code, thinking it must've just been an implementation error, or us using the helpers wrong... but after going over it with a CA, we realized the fundamental math behind our particle filter was straight up wrong. 
+
+
+3. C++ makes it hard to test because you *have* to rebuild the code every time. Part of this is that it's annoying to have to do that, but part of it is that we were not in the habit of doing this, so we would consistently forget and wonder why our fixes weren't fixing anything. 
+
 
 # Improvements
+In hindsight, we would've probably finished the project more quickly if we just group-programmed the entire thing. While it's true that we should've taken more care to define the I/Os of our functions, in the end our lack of familiarity made it so we made a ton of small assumptions (about types, or what was publically avilable in each function, etc.) that made integration near-impossible. 
+
+In the end, we basically restarted and tried it again, avoiding all of the mistakes we made the first time.
 
 # Interesting Lessons
 
+This is not a new lesson, but doing things in your brain is hard. This goes for coordinate frames -- if you don't at least list out what coordinate frames need to be considered at every point in time, you'll struggle a lot to figure out why the particles don't *quite* move the way you want it to move -- but it also goes for probabiliy distributions, software architecture, and pretty much anything else. Code is powerful but it is no substitute for a sketch. 
+
+Do not delete the starter code. Even on accident. Just don't do it @Anmol 
