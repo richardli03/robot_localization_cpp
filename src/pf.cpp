@@ -37,6 +37,7 @@ geometry_msgs::msg::Pose Particle::as_pose()
   geometry_msgs::msg::Pose pose = geometry_msgs::msg::Pose();
   pose.position.x = this->x;
   pose.position.y = this->y;
+  pose.position.z = 0.0;
   pose.orientation = quaternion_from_euler(0, 0, this->theta);
 
   return pose;
@@ -174,27 +175,28 @@ bool ParticleFilter::moved_far_enough_to_update(std::vector<float> new_odom_xy_t
 void ParticleFilter::update_robot_pose()
 {
   // first make sure that the particle weights are normalized
-  normalize_particles();
+  this->normalize_particles();
 
   // TODO: assign the latest pose into self.robot_pose as a
   // geometry_msgs.Pose object just to get started we will fix the robot's
   // pose to always be at the origin
-  geometry_msgs::msg::Pose robot_pose;
-  if (odom_pose.has_value())
-  {
-    transform_helper_->fix_map_to_odom_transform(robot_pose,
-                                                 odom_pose.value());
+  Particle best_particle = this->particle_cloud[0];
+  for (unsigned int i = 0; i < this->particle_cloud.size(); i++) {
+    if (this->particle_cloud[i].w > best_particle.w) {
+      best_particle = this->particle_cloud[i];
+    }
   }
-  else
-  {
-    // TODO: print something
-  }
+  auto robot_pose = best_particle.as_pose();
+  this->transform_helper_->fix_map_to_odom_transform(robot_pose,
+                                                     this->odom_pose.value());
 }
 
 void ParticleFilter::update_particles_with_odom()
 {
+
   auto new_odom_xy_theta =
       transform_helper_->convert_pose_to_xy_theta(odom_pose.value());
+  std::vector<float> poseDelta = {new_odom_xy_theta[0] - current_odom_xy_theta[0], new_odom_xy_theta[1] - current_odom_xy_theta[1], new_odom_xy_theta[2] - current_odom_xy_theta[2]};
 
   // compute the change in x,y,theta since our last update
   if (current_odom_xy_theta.size() >= 3)
@@ -203,26 +205,18 @@ void ParticleFilter::update_particles_with_odom()
     auto delta_x = new_odom_xy_theta[0] - current_odom_xy_theta[0];
     auto delta_y = new_odom_xy_theta[1] - current_odom_xy_theta[1];
     auto delta_theta = new_odom_xy_theta[2] - current_odom_xy_theta[2];
+    current_odom_xy_theta = new_odom_xy_theta;
   }
   else
   {
     current_odom_xy_theta = new_odom_xy_theta;
     return;
   }
-  std::vector<float> poseDelta = {new_odom_xy_theta[0] - current_odom_xy_theta[0], new_odom_xy_theta[1] - current_odom_xy_theta[1], new_odom_xy_theta[2] - current_odom_xy_theta[2]};
   std::cout << "\n";
   std::cout << new_odom_xy_theta[0] << "," << new_odom_xy_theta[1] << "," << new_odom_xy_theta[2] << std::endl;
   std::cout << current_odom_xy_theta[0] << "," << current_odom_xy_theta[1] << "," << current_odom_xy_theta[2] << std::endl;
   std::cout << poseDelta[0] << "," << poseDelta[1] << "," << poseDelta[2] << std::endl;
   for (auto& particle: particle_cloud) {
-    // auto particlePose = transform_helper_->createTransformationMatrix(particle.x, particle.y, particle.theta);
-    // // apply poseDiff on the particlePose
-    // auto newparticlePose = particlePose * poseDiff;
-    // // update the particle
-    // particle.x = newparticlePose(0,2);
-    // particle.y = newparticlePose(1,2);
-    // // particle.theta += atan2(newparticlePose(1,0), newparticlePose(0,0));
-    // particle.theta += new_odom_xy_theta[2] - current_odom_xy_theta[2];
     particle.x += cos(particle.theta)*poseDelta[0];
     particle.y += sin(particle.theta)*poseDelta[1];
     particle.theta += poseDelta[2];
