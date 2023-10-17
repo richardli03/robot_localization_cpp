@@ -48,6 +48,7 @@ In hindsight, we would've probably finished the project more quickly if we just 
 In the end, we basically restarted and tried it again, avoiding all of the mistakes we made the first time.
 
 # Interesting Lessons
-1. `auto` is *poison*. Only use it when you're completely sure that it's being used in way that it cannot be misconstrued or misused in the future. It's super annoying to try to deal with type issues, only to find out that you never actually figured out what type a variable should've been in the first place. 
 
-2. This is not a new lesson, but doing things in your brain is hard. This goes for coordinate frames -- if you don't at least list out what coordinate frames need to be considered at every point in time, you'll struggle a lot to figure out why the particles don't *quite* move the way you want it to move -- but it also goes for probabiliy distributions, software architecture, and pretty much anything else. Code is powerful but it is no substitute for a sketch. 
+This is not a new lesson, but doing things in your brain is hard. This goes for coordinate frames -- if you don't at least list out what coordinate frames need to be considered at every point in time, you'll struggle a lot to figure out why the particles don't *quite* move the way you want it to move -- but it also goes for probabiliy distributions, software architecture, and pretty much anything else. Code is powerful but it is no substitute for a sketch. 
+
+Do not delete the starter code. Even on accident. Just don't do it @Anmol 
