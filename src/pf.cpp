@@ -50,9 +50,9 @@ ParticleFilter::ParticleFilter() : Node("pf")
   odom_frame = "odom";           // the name of the odometry coordinate frame
   scan_topic = "scan";           // the topic where we will get laser scans from
 
-  n_particles = 20; // the number of particles to use
+  n_particles = 500; // the number of particles to use
 
-  d_thresh = 0.2; // the amount of linear movement before performing an update
+  d_thresh = 0.1; // the amount of linear movement before performing an update
   a_thresh =
       M_PI / 6; // the amount of angular movement before performing an update
 
@@ -260,7 +260,7 @@ void ParticleFilter::update_particles_with_laser(std::vector<float> r,
 {
   for (unsigned int j = 0; j < particle_cloud.size(); j++) {
     int sum = 0;
-    double thresh = .4;
+    double thresh = 0.1;
     double intermediate;
     auto laser_scan_map_frame = particle_cloud[j].transform_scan_to_map(r, theta);
 
@@ -299,10 +299,10 @@ void ParticleFilter::initialize_particle_cloud(
   std::random_device rd;
   std::mt19937 gen(rd());
   std::normal_distribution<double> x_distribution(xy_theta.value()[0], std);
-  std::normal_distribution<double> y_distribution(xy_theta.value()[0], std);
-  std::normal_distribution<double> theta_distribution(xy_theta.value()[0], 2*M_PI); 
+  std::normal_distribution<double> y_distribution(xy_theta.value()[1], std);
+  std::normal_distribution<double> theta_distribution(xy_theta.value()[2], 0.2); 
 
-  
+  particle_cloud = std::vector<Particle>();
   // TODO: create particles
   for (unsigned int i = 0; i < n_particles; i++){
     Particle gen_particle;
