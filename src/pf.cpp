@@ -151,6 +151,8 @@ void ParticleFilter::run_loop()
   }
   else if (moved_far_enough_to_update(new_odom_xy_theta))
   {
+    std::cout << current_odom_xy_theta[2] << "\n";
+    std::cout << "NUM PARTICLES" << particle_cloud.size() << std::endl;
     // we have moved far enough to do an update!
     update_particles_with_odom(); // update based on odometry
     update_particles_with_laser(r,
@@ -166,10 +168,10 @@ void ParticleFilter::run_loop()
 
 bool ParticleFilter::moved_far_enough_to_update(std::vector<float> new_odom_xy_theta)
 {
-  return abs(new_odom_xy_theta[0] - current_odom_xy_theta[0] > d_thresh ||
+  return abs(new_odom_xy_theta[0] - current_odom_xy_theta[0]) > d_thresh ||
              abs(new_odom_xy_theta[1] - current_odom_xy_theta[1]) >
                  d_thresh ||
-             abs(new_odom_xy_theta[2] - current_odom_xy_theta[2]) > a_thresh);
+             abs(new_odom_xy_theta[2] - current_odom_xy_theta[2]) > a_thresh;
 }
 
 void ParticleFilter::update_robot_pose()
@@ -186,6 +188,7 @@ void ParticleFilter::update_robot_pose()
       best_particle = this->particle_cloud[i];
     }
   }
+  std::cout << best_particle.x << "," << best_particle.w << std::endl;
   auto robot_pose = best_particle.as_pose();
   this->transform_helper_->fix_map_to_odom_transform(robot_pose,
                                                      this->odom_pose.value());
@@ -196,30 +199,23 @@ void ParticleFilter::update_particles_with_odom()
 
   auto new_odom_xy_theta =
       transform_helper_->convert_pose_to_xy_theta(odom_pose.value());
-  std::vector<float> poseDelta = {new_odom_xy_theta[0] - current_odom_xy_theta[0], new_odom_xy_theta[1] - current_odom_xy_theta[1], new_odom_xy_theta[2] - current_odom_xy_theta[2]};
-
-  // compute the change in x,y,theta since our last update
-  if (current_odom_xy_theta.size() >= 3)
-  {
-    auto old_odom_xy_theta = current_odom_xy_theta;
-    auto delta_x = new_odom_xy_theta[0] - current_odom_xy_theta[0];
-    auto delta_y = new_odom_xy_theta[1] - current_odom_xy_theta[1];
-    auto delta_theta = new_odom_xy_theta[2] - current_odom_xy_theta[2];
-    current_odom_xy_theta = new_odom_xy_theta;
-  }
-  else
+  if (!current_odom_xy_theta.size() >= 3)
   {
     current_odom_xy_theta = new_odom_xy_theta;
     return;
-  }
-  std::cout << "\n";
-  std::cout << new_odom_xy_theta[0] << "," << new_odom_xy_theta[1] << "," << new_odom_xy_theta[2] << std::endl;
-  std::cout << current_odom_xy_theta[0] << "," << current_odom_xy_theta[1] << "," << current_odom_xy_theta[2] << std::endl;
-  std::cout << poseDelta[0] << "," << poseDelta[1] << "," << poseDelta[2] << std::endl;
+  }  
+  auto delta_x = new_odom_xy_theta[0] - current_odom_xy_theta[0];
+  auto delta_y = new_odom_xy_theta[1] - current_odom_xy_theta[1];
+  auto delta_theta = new_odom_xy_theta[2] - current_odom_xy_theta[2];
+  current_odom_xy_theta = new_odom_xy_theta;
+
+  auto delta_x_n = cos(current_odom_xy_theta[2])*delta_x + sin(current_odom_xy_theta[2])*delta_y;
+  auto delta_y_n = -sin(current_odom_xy_theta[2])*delta_x + cos(current_odom_xy_theta[2])*delta_y;
+  
   for (auto& particle: particle_cloud) {
-    particle.x += cos(particle.theta)*poseDelta[0];
-    particle.y += sin(particle.theta)*poseDelta[1];
-    particle.theta += poseDelta[2];
+    particle.x += cos(particle.theta)*delta_x_n - sin(particle.theta)*delta_y_n;
+    particle.y += sin(particle.theta)*delta_x_n + cos(particle.theta)*delta_y_n;
+    particle.theta += delta_theta;
   }
 }
 
@@ -244,6 +240,19 @@ void ParticleFilter::resample_particles()
   for (unsigned int i = 0; i < choices.size(); i++) {
     particle_cloud.push_back(new_particles[results[i]]);
   }
+  
+  
+
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::normal_distribution<double> particle_noise(0, 1);
+  for (unsigned int i = 0; i < particle_cloud.size(); i++) {
+    particle_cloud[i].x += particle_noise(gen) * 0.1;
+    particle_cloud[i].y += particle_noise(gen) * 0.1;
+    particle_cloud[i].theta += particle_noise(gen) * 0.02;
+  }
+
+  normalize_particles();
 }
 
 void ParticleFilter::update_particles_with_laser(std::vector<float> r,
@@ -256,7 +265,7 @@ void ParticleFilter::update_particles_with_laser(std::vector<float> r,
     auto laser_scan_map_frame = particle_cloud[j].transform_scan_to_map(r, theta);
 
 
-    std::cout << "before" << particle_cloud[j].w << std::endl;
+    // std::cout << "before" << particle_cloud[j].w << std::endl;
     for (unsigned int i = 0; i < r.size(); i++) {
       intermediate = occupancy_field->get_closest_obstacle_distance(
                       laser_scan_map_frame(0, i), laser_scan_map_frame(1, i)), r.size();
@@ -265,7 +274,7 @@ void ParticleFilter::update_particles_with_laser(std::vector<float> r,
       }
     }
     particle_cloud[j].w = sum;
-    std::cout << "after" << particle_cloud[j].w << std::endl;
+    // std::cout << "after" << particle_cloud[j].w << std::endl;
   }
 }
 
@@ -300,6 +309,9 @@ void ParticleFilter::initialize_particle_cloud(
     gen_particle.x = x_distribution(gen);
     gen_particle.y = y_distribution(gen);
     gen_particle.theta = theta_distribution(gen);
+    // gen_particle.x = 0.0;
+    // gen_particle.y = 0.0;
+    // gen_particle.theta = 0.0;
     gen_particle.w = 1; // so we can see that thing
     particle_cloud.push_back(gen_particle); 
   }
