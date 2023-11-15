@@ -25,11 +25,19 @@ Functionally, our particle filter behaves as follows:
 4. We allow the robot to move and give us new laser scan data.
 5. Rinse and repeat steps 2 - 4 until the points converge onto a single point. 
 
-But we'll go into more detail about each step. 
+But we'll go into more detail about each step.
 
+## Updating the particles
+
+1. `update_robot_pose`
+    This function is responsible for updating the robot's pose based on the particles. It normalizes the particles to ensure their weights sum up to 1. Then, it identifies the particle with the highest weight, considering it as the best estimate of the current position. The robot's pose is updated to this best particle's pose. This approach is a key part of the particle filter algorithm, where the estimated robot pose is the one that best aligns with the sensor data.
+2. `update_particles_with_odom`
+    This function updates the particles based on the robot's odometry data. It calculates the change in position and orientation (delta_x, delta_y, delta_theta) since the last update and applies these changes to each particle. This step is crucial for maintaining the consistency of the particle cloud with the robot's movement, ensuring that the particles follow the trajectory of the robot.
+3. `update_particles_with_laser`
+    This function updates the particles using laser scan data. It transforms the laser scan data to the map frame for each particle and calculates a weight based on the proximity of the scan points to the nearest obstacles. This step is vital for aligning the particles with the physical environment, as it adjusts their likelihood based on how well they match the observed data.
 
 # Design Decision
-One key design decision we had to make was related to our implementation of resampling. There are a number of ways to create new points around the points that were the best from the previous sampling. 
+One key design decision we had to make was related to our implementation of resampling. There are a number of ways to create new points around the points that were the best from the previous sampling.
 
 # Challenges
 1. We had an absurd amount of difficulty just reading C++. Perhaps it's because we are spoiled with Python's lack of typing, but trying to keep track of each datatype (especially what data type was within a list) was really challenging. 
