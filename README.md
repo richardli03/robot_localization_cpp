@@ -29,15 +29,31 @@ But we'll go into more detail about each step.
 
 ## Updating the particles
 
-1. `update_robot_pose`
+1. `initialize_particle_cloud`
+   This functino is responsible for creating all of our initial particles. We do this by creating distributions from which to sample for the x, y, and theta of our particles. We then sample `n_particles` times and append those particles to our `particle_cloud`, which is responsible for the rest of the functionality. 
+2. `update_robot_pose`
     This function is responsible for updating the robot's pose based on the particles. It normalizes the particles to ensure their weights sum up to 1. Then, it identifies the particle with the highest weight, considering it as the best estimate of the current position. The robot's pose is updated to this best particle's pose. This approach is a key part of the particle filter algorithm, where the estimated robot pose is the one that best aligns with the sensor data.
-2. `update_particles_with_odom`
+3. `update_particles_with_odom`
     This function updates the particles based on the robot's odometry data. It calculates the change in position and orientation (delta_x, delta_y, delta_theta) since the last update and applies these changes to each particle. This step is crucial for maintaining the consistency of the particle cloud with the robot's movement, ensuring that the particles follow the trajectory of the robot.
-3. `update_particles_with_laser`
+4. `update_particles_with_laser`
     This function updates the particles using laser scan data. It transforms the laser scan data to the map frame for each particle and calculates a weight based on the proximity of the scan points to the nearest obstacles. This step is vital for aligning the particles with the physical environment, as it adjusts their likelihood based on how well they match the observed data.
+5. `normalize_particle`
+   This function handles the normalization of our particle cloud's weights. 
+6. `resample_particle`
+   We go into detail about this is our 
+   design decision spotlight below.
+
 
 # Design Decision
-One key design decision we had to make was related to our implementation of resampling. There are a number of ways to create new points around the points that were the best from the previous sampling.
+One key design decision we had to make was related to our implementation of `resample_particle`, which handles the processing and reproduction of (hopefully) more accurate particles. There are a number of ways to create new points around the points that were the best from the previous sampling.
+
+For the sake of simplicity, our implementation ended up being relatively naive:
+    
+1. Ensure that the weights of particles form a valid probability distribution via normalization
+2. Generate a new set of indices corresponding to particles based on the normalized weights of particles using `draw_random_sample`, which will bias our resampled particles towards higher weights.
+3.  Update the particle cloud by copying particles based on the sampled indices.
+4.  Add noise (from a normal distribution 0-1) to the particle positions to introduce variability
+5.  Renormalize the weights of the newly sampled particles.
 
 # Challenges
 1. We had an absurd amount of difficulty just reading C++. Perhaps it's because we are spoiled with Python's lack of typing, but trying to keep track of each datatype (especially what data type was within a list) was really challenging. 
@@ -46,8 +62,7 @@ One key design decision we had to make was related to our implementation of resa
 
 3. We thought that we understood the matrix math that had to be done in order to implement the particle filter, so we kept on debugging the code, thinking it must've just been an implementation error, or us using the helpers wrong... but after going over it with a CA, we realized the fundamental math behind our particle filter was straight up wrong. 
 
-
-3. C++ makes it hard to test because you *have* to rebuild the code every time. Part of this is that it's annoying to have to do that, but part of it is that we were not in the habit of doing this, so we would consistently forget and wonder why our fixes weren't fixing anything. 
+4. C++ makes it hard to test because you *have* to rebuild the code every time. Part of this is that it's annoying to have to do that, but part of it is that we were not in the habit of doing this, so we would consistently forget and wonder why our fixes weren't fixing anything. 
 
 
 # Improvements

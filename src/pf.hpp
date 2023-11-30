@@ -165,7 +165,10 @@ private:
    */
   void initialize_particle_cloud(
       std::optional<std::vector<float>> xy_theta = std::nullopt);
-
+  
+  /**
+   * A helper function to normalize our particle cloud's weights so that they add up to one
+   */
   void normalize_particles();
 
   void publish_particles(rclcpp::Time timestamp);
